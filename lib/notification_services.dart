@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_notifications/message_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -43,13 +45,17 @@ class NotificationServices {
     );
 
     await _flutterLocalNotificationsPlugin.initialize(initializationSetting,
-        onDidReceiveNotificationResponse: (payload) {});
+        onDidReceiveNotificationResponse: (payload) {
+      handleMessage(context, message);
+    });
   }
 
   void firebaseInit(BuildContext context) {
     FirebaseMessaging.onMessage.listen((message) {
       if (Platform.isAndroid) {
         initLocalNotifications(context, message);
+        showNotification(message);
+      } else {
         showNotification(message);
       }
     });
@@ -104,4 +110,23 @@ class NotificationServices {
   //     event.toString();
   //   });
   // }
+
+  Future<void> setupInteractMessage(BuildContext context) async {
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      handleMessage(context, initialMessage);
+    }
+
+    FirebaseMessaging.onMessageOpenedApp.listen((event) {
+      handleMessage(context, event);
+    });
+  }
+
+  void handleMessage(BuildContext context, RemoteMessage message) {
+    if (message.data['type'] == 'msj') {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (context) => const MessageScreen()));
+    }
+  }
 }
