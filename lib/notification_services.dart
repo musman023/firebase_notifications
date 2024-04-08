@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_notifications/message_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationServices {
@@ -52,6 +51,9 @@ class NotificationServices {
 
   void firebaseInit(BuildContext context) {
     FirebaseMessaging.onMessage.listen((message) {
+      if (Platform.isIOS) {
+        foregroundMessage();
+      }
       if (Platform.isAndroid) {
         initLocalNotifications(context, message);
         showNotification(message);
@@ -105,11 +107,11 @@ class NotificationServices {
     return token!;
   }
 
-  // void isTokenRefresh() {
-  //   messaging.onTokenRefresh.listen((event) {
-  //     event.toString();
-  //   });
-  // }
+  void isTokenRefresh() {
+    messaging.onTokenRefresh.listen((event) {
+      event.toString();
+    });
+  }
 
   Future<void> setupInteractMessage(BuildContext context) async {
     RemoteMessage? initialMessage =
@@ -128,5 +130,14 @@ class NotificationServices {
       Navigator.push(context,
           MaterialPageRoute(builder: (context) => const MessageScreen()));
     }
+  }
+
+  Future foregroundMessage() async {
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 }
